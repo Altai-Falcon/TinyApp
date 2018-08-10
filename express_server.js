@@ -2,9 +2,12 @@ var express = require("express");
 var app = express();
 var PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}))
+app.use(bodyParser.urlencoded({extended: true}));
+var cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 app.set("view engine", "ejs");
+
 
 function generateRandomString() {
   var lottery = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -53,6 +56,11 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls");    
 });
 
+
+app.post("/login", (req, res) => {
+  res.cookie("username" ,req.body.username);
+  res.redirect("/urls");    
+});
 
 
 app.get("/u/:shortURL", (req, res) => {

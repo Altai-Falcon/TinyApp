@@ -58,11 +58,10 @@ app.post("/urls", (req, res) => {
 
 
 app.post("/login", (req, res) => {
-  var theCookie = res.cookie("username" ,req.body.username);
-  console.log("this is the cookie", res.cookie['username']);
-  console.log("call cookie from /login ",res.cookie.username);
-  console.log("this is the req.body.username", req.body.username);
+  res.cookie('cookiesUsername', req.body['username']);
+  console.log('this is the cookie', res.cookie);
   console.log("got into log in");
+  console.log(req.body);
   res.redirect("/urls");    
 });
 

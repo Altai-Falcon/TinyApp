@@ -27,6 +27,7 @@ var urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+
 app.get("/", (req, res) => {
   res.end("Hello!");
 });
@@ -41,12 +42,18 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = {
+    username: req.cookies["cookiesUsername"],
+    urls: urlDatabase,
+  };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  let templateVars = {
+    username: req.cookies["cookiesUsername"],
+  }
+  res.render("urls_new", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -59,7 +66,8 @@ app.post("/urls", (req, res) => {
 
 app.post("/login", (req, res) => {
   res.cookie('cookiesUsername', req.body['username']);
-  console.log('this is the cookie', res.cookie);
+  // console.log('this is the cookie', res.cookie);
+  console.log('this is the cookie username', req.cookies['cookiesUsername']); // why does it only show the last username value not the current one? 
   console.log("got into log in");
   console.log(req.body);
   res.redirect("/urls");    
@@ -86,7 +94,9 @@ app.post("/urls/:id", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
 	console.log(req.params.id);
-  let templateVars = { shortURL: req.params.id,
+  let templateVars = { 
+    username: req.cookies["cookiesUsername"],
+    shortURL: req.params.id,
   						longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });

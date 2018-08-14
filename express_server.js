@@ -30,6 +30,19 @@ var urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//**THIS IS THE USERS DATA BASE
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+};
 
 //*****ROOT URLS GET REQUEST  ==>  URLS_INDEX.ejs*****
 app.get("/urls", (req, res) => {
@@ -49,7 +62,6 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-
 //** POST REQUEST  WITH THE INFO FROM THE URLS/NEW FORM  (in the form of req.body)
 app.post("/urls", (req, res) => {
   console.log("these are the post request paramaters", req.body); // debug statement to see POST request parameters. Body should contain one URL-encoded name-value pair with the name longURL.
@@ -57,10 +69,10 @@ app.post("/urls", (req, res) => {
   urlDatabase[newShortURL] = "https://www." + req.body["longURL"];  //Note that it's been parsed into a JS object, where longURL is a key, and the value is no longer URL-encoded. That's the work of the bodyParser.urlEncoded() middleware
   res.redirect("/urls");    
 });
+//====================================================================//
+              
 
-//******************************************************************//
-
-
+//*****************LOGIN & LOG OUT******************************************\\
 //**LOGIN POST
 app.post("/login", (req, res) => {
   res.cookie('cookiesUsername', req.body['username']);
@@ -71,17 +83,34 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");    
 });
 
-
 //**LOG-OUT POST
 app.post("/logout", (req, res) => {
   res.clearCookie('cookiesUsername', req.body['username']);
   console.log(req.body);
   res.redirect("/urls");    
 });
+//==========================================================================//
 
 
 
+//*****************REGISTER GET &  POST**************************************\\
+//**REQUEST TO ADD NEW URL  POINTING TO THE FORM @ URLS_NEW
+app.get("/register", (req, res) => {
+  res.clearCookie('cookiesUsername', req.body['username']);  //delete any previous cookie
+  let templateVars = {
+    username: req.cookies["cookiesUsername"],
+  }
+  res.render("register_form", templateVars);
+});
 
+//** POST REQUEST  WITH THE INFO FROM THE REGISTER/NEW FORM  (in the form of req.body)
+app.post("/register", (req, res) => {
+  console.log("these are the post request paramaters", req.body); // debug statement to see POST request parameters. Body should contain one URL-encoded name-value pair with the name longURL.
+  let newShortURL = generateRandomString();
+  urlDatabase[newShortURL] = "https://www." + req.body["longURL"];  //Note that it's been parsed into a JS object, where longURL is a key, and the value is no longer URL-encoded. That's the work of the bodyParser.urlEncoded() middleware
+  res.redirect("/urls");    
+});
+//============================================================================//
 
 
 
@@ -98,8 +127,6 @@ app.post("/urls/:id/delete", (req, res) => {
 	delete urlDatabase[req.params.id];
 	res.redirect("/urls");  // redirect to urls_index.ejs
 });
-
-
 
 //*****************EDIT URL******************************************\\
 //**EDIT URL GET REQUEST ===> Renders form at urls_show.ejs
@@ -119,9 +146,7 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL;
   res.redirect("/urls");  // redirect to urls_index.ejs
 });
-
-//******************************************************************//
-
+//====================================================================//
 
 
 

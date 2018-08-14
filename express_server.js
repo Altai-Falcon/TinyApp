@@ -2,6 +2,7 @@ var express = require("express");
 var app = express();
 var PORT = 8080; // default port 8080
 const bodyParser = require("body-parser"); //allow access POST request parameters ie: req.body.longURL
+const bcrypt = require('bcryptjs');
 app.use(bodyParser.urlencoded({extended: true})); 
 var cookieParser = require('cookie-parser');
 app.use(cookieParser());
@@ -49,8 +50,14 @@ function findPasswordByEmail(email) {
 
 //**THIS IS THE DATA BASE
 var urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "user2RandomID"
+  }
 };
 
 //**THIS IS THE USERS DATA BASE
@@ -82,7 +89,11 @@ app.get("/urls/new", (req, res) => {
   let templateVars = {
     user: users[req.cookies["cookiesUserID"]],
   }
-  res.render("urls_new", templateVars);
+  if (req.cookies["cookiesUserID"]) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login")
+  }
 });
 
 //** POST REQUEST  WITH THE INFO FROM THE URLS/NEW FORM  (in the form of req.body)
@@ -109,7 +120,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const {email, password} = req.body;
   if (checkIfUserExist(email)) {
-    if (password === findPasswordByEmail(email)) {
+    if (bcrypt.compareSync(password, findPasswordByEmail(email))) {
       res.cookie('cookiesUserID', findUserIDbyEmail(email));
       res.redirect("/urls"); 
     } else {
@@ -142,6 +153,7 @@ app.get("/register", (req, res) => {
 //** POST REQUEST  WITH THE INFO FROM THE REGISTER/NEW FORM  (in the form of req.body)
 app.post("/register", (req, res) => {
   const {email, password} = req.body;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   console.log("these are the post request paramaters", req.body); // debug statement to see POST request parameters. Body should contain one URL-encoded name-value pair with the name longURL.
   if(email === "" && password === ""){
     res.sendStatus(400);
@@ -152,7 +164,7 @@ app.post("/register", (req, res) => {
     users[newUserID] = {
       id: newUserID,
       email: email,
-      password: password
+      password: hashedPassword
     }; 
     console.log("this is the user datatbase after add new user: ", users)
     res.cookie('cookiesUserID', findUserIDbyEmail(email));  
@@ -174,8 +186,12 @@ app.get("/u/:shortURL", (req, res) => {
 //**DELETE POST
 app.post("/urls/:id/delete", (req, res) => {
 	console.log(req.params.id);
-	delete urlDatabase[req.params.id];
-	res.redirect("/urls");  // redirect to urls_index.ejs
+  if (req.cookies["cookiesUserID"] === urlDatabase[req.params.id]["userID"]){
+    delete urlDatabase[req.params.id];
+    res.redirect("/urls");
+  } else {
+    res.sendStatus(403);
+  }
 });
 
 //*****************EDIT URL******************************************\\
@@ -187,13 +203,21 @@ app.get("/urls/:id", (req, res) => {
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id] 
   };
-  res.render("urls_show", templateVars);  
+  if (req.cookies["cookiesUserID"] === urlDatabase[req.params.id]["userID"]){
+    res.render("urls_show", templateVars); 
+  } else {
+    res.sendStatus(403);
+  }
+   
 });
 
 //**EDIT URL POST ====> send the request body and add to urlDatabase object
 app.post("/urls/:id", (req, res) => {
   console.log(req.params.id);
-  urlDatabase[req.params.id] = req.body.longURL;
+  urlDatabase[req.params.id] = {
+    longURL: req.body.longURL,
+    userID: req.cookies["cookiesUserID"]
+  }
   res.redirect("/urls");  // redirect to urls_index.ejs
 });
 //====================================================================//

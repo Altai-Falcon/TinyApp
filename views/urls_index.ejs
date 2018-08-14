@@ -10,12 +10,14 @@
 	<% include ./partials/_header %>
     <ul>
     	<% for(var url in urls){ %>
-    	   <li> <%= `${url}: ${urls[url]}` %>  </li>
+    	   <li> <%= `${url}: ${urls[url]["longURL"]}` %>  </li>
            <a href= <%=`/urls/${url}`%> >Edit</a>
     	   <form method="POST" action="/urls/<%=url%>/delete">
     		<button type = "submit">Delete</button>
     	   </form>
         <%  } %>	
     </ul>
+
+    <a href="/urls/new">Click here to create a New Short Link!!</a>
 </body>
 </html>

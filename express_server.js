@@ -23,6 +23,29 @@ function generateRandomString() {
   return randomString();
 }
 
+function findUserIDbyEmail(email) {
+  for(var user in users){
+    if(users[user]["email"] === email) {
+      return users[user].id;
+    }
+  }
+}
+
+function checkIfUserExist(email) {
+  for(var user in users) {
+    if(email === users[user]["email"]) {
+      return true;
+    }
+  }
+}
+
+function findPasswordByEmail(email) {
+  for(var user in users) {
+    if(email === users[user]["email"]) {
+      return users[user]["password"];
+    }
+  }
+}
 
 //**THIS IS THE DATA BASE
 var urlDatabase = {
@@ -35,19 +58,19 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: "1"
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: "2"
   }
 };
 
 //*****ROOT URLS GET REQUEST  ==>  URLS_INDEX.ejs*****
 app.get("/urls", (req, res) => {
   let templateVars = {
-    username: req.cookies["cookiesUsername"],
+    user: users[req.cookies["cookiesUserID"]],
     urls: urlDatabase,
   };
   res.render("urls_index", templateVars);
@@ -57,7 +80,7 @@ app.get("/urls", (req, res) => {
 //**REQUEST TO ADD NEW URL  POINTING TO THE FORM @ URLS_NEW
 app.get("/urls/new", (req, res) => {
   let templateVars = {
-    username: req.cookies["cookiesUsername"],
+    user: users[req.cookies["cookiesUserID"]],
   }
   res.render("urls_new", templateVars);
 });
@@ -73,19 +96,33 @@ app.post("/urls", (req, res) => {
               
 
 //*****************LOGIN & LOG OUT******************************************\\
+
+//**LOGIN GET
+app.get("/login", (req, res) => {
+ let templateVars = {
+    user: users[req.cookies["cookiesUserID"]],
+  }
+  res.render("login_form", templateVars);
+});
+
 //**LOGIN POST
 app.post("/login", (req, res) => {
-  res.cookie('cookiesUsername', req.body['username']);
-  // console.log('this is the cookie', res.cookie);
-  console.log('this is the cookie username', req.cookies['cookiesUsername']); // why does it only show the last username value not the current one? 
-  console.log("got into log in");
-  console.log(req.body);
-  res.redirect("/urls");    
+  const {email, password} = req.body;
+  if (checkIfUserExist(email)) {
+    if (password === findPasswordByEmail(email)) {
+      res.cookie('cookiesUserID', findUserIDbyEmail(email));
+      res.redirect("/urls"); 
+    } else {
+      res.sendStatus(403);
+    }
+  } else {
+    res.sendStatus(403);
+  }     
 });
 
 //**LOG-OUT POST
 app.post("/logout", (req, res) => {
-  res.clearCookie('cookiesUsername', req.body['username']);
+  res.clearCookie('cookiesUserID');
   console.log(req.body);
   res.redirect("/urls");    
 });
@@ -96,19 +133,32 @@ app.post("/logout", (req, res) => {
 //*****************REGISTER GET &  POST**************************************\\
 //**REQUEST TO ADD NEW URL  POINTING TO THE FORM @ URLS_NEW
 app.get("/register", (req, res) => {
-  res.clearCookie('cookiesUsername', req.body['username']);  //delete any previous cookie
   let templateVars = {
-    username: req.cookies["cookiesUsername"],
+    user: users[req.cookies["cookiesUserID"]],
   }
   res.render("register_form", templateVars);
 });
 
 //** POST REQUEST  WITH THE INFO FROM THE REGISTER/NEW FORM  (in the form of req.body)
 app.post("/register", (req, res) => {
+  const {email, password} = req.body;
   console.log("these are the post request paramaters", req.body); // debug statement to see POST request parameters. Body should contain one URL-encoded name-value pair with the name longURL.
-  let newShortURL = generateRandomString();
-  urlDatabase[newShortURL] = "https://www." + req.body["longURL"];  //Note that it's been parsed into a JS object, where longURL is a key, and the value is no longer URL-encoded. That's the work of the bodyParser.urlEncoded() middleware
-  res.redirect("/urls");    
+  if(email === "" && password === ""){
+    res.sendStatus(400);
+  } else if (checkIfUserExist(email)){
+    res.sendStatus(400);
+  } else{
+    let newUserID = generateRandomString();
+    users[newUserID] = {
+      id: newUserID,
+      email: email,
+      password: password
+    }; 
+    console.log("this is the user datatbase after add new user: ", users)
+    res.cookie('cookiesUserID', findUserIDbyEmail(email));  
+    res.redirect("/urls");    
+  }
+  
 });
 //============================================================================//
 
@@ -133,7 +183,7 @@ app.post("/urls/:id/delete", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   console.log("this is the request.params.id from the get request:", req.params.id);
   let templateVars = { 
-    username: req.cookies["cookiesUsername"],
+    user: users[req.cookies["cookiesUserID"]],
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id] 
   };

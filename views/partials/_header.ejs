@@ -1,8 +1,8 @@
 
 <header>
 
-<% if(username){ %>
-	<h1> <%= username %> </h1> 
+<% if(user){ %>
+	<h1> Hello <%= `${user.email}` %> !</h1> 
 
 <!-- ***********LOGOUT FORM****************** -->
 <form method="POST" action="/logout">
@@ -15,12 +15,21 @@
 
 
 <% } else{ %>	
-<!-- ***********LOG-IN FORM****************** -->
-<form method="POST" action="/login">
-	<input type="text" name="username" placeholder="enter Login info">
-	<button type = "submit">Login</button>
-</form>
+<!-- ***********LINKS TO LOG-IN & REGISTRATION FORMS****************** -->
+
+<h1> Hello! </h1>
+<h3>Please Login if you already have an account!</h3>
+
+	<p> 
+		<a href="/login">Login</a>
+		OR 
+		<a href="/register">Register an account</a>
+	</p>
+
+
 <!-- ***************************************** -->
+
+
 <% } %>
 
 

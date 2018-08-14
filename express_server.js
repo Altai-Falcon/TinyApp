@@ -4,8 +4,17 @@ var PORT = 8080; // default port 8080
 const bodyParser = require("body-parser"); //allow access POST request parameters ie: req.body.longURL
 const bcrypt = require('bcryptjs');
 app.use(bodyParser.urlencoded({extended: true})); 
-var cookieParser = require('cookie-parser');
-app.use(cookieParser());
+// var cookieParser = require('cookie-parser');
+// app.use(cookieParser());
+var cookieSession = require('cookie-session');
+app.use(cookieSession({
+  name: 'session',
+  keys: ["nrtyrdfgr"],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
+
 app.set("view engine", "ejs");
 
 // remember template vars just means template variables
@@ -77,7 +86,7 @@ const users = {
 //*****ROOT URLS GET REQUEST  ==>  URLS_INDEX.ejs*****
 app.get("/urls", (req, res) => {
   let templateVars = {
-    user: users[req.cookies["cookiesUserID"]],
+    user: users[req.session["cookiesUserID"]],
     urls: urlDatabase,
   };
   res.render("urls_index", templateVars);
@@ -87,9 +96,9 @@ app.get("/urls", (req, res) => {
 //**REQUEST TO ADD NEW URL  POINTING TO THE FORM @ URLS_NEW
 app.get("/urls/new", (req, res) => {
   let templateVars = {
-    user: users[req.cookies["cookiesUserID"]],
+    user: users[req.session["cookiesUserID"]],
   }
-  if (req.cookies["cookiesUserID"]) {
+  if (req.session["cookiesUserID"]) {
     res.render("urls_new", templateVars);
   } else {
     res.redirect("/login")
@@ -111,7 +120,7 @@ app.post("/urls", (req, res) => {
 //**LOGIN GET
 app.get("/login", (req, res) => {
  let templateVars = {
-    user: users[req.cookies["cookiesUserID"]],
+    user: users[req.session["cookiesUserID"]],
   }
   res.render("login_form", templateVars);
 });
@@ -121,7 +130,7 @@ app.post("/login", (req, res) => {
   const {email, password} = req.body;
   if (checkIfUserExist(email)) {
     if (bcrypt.compareSync(password, findPasswordByEmail(email))) {
-      res.cookie('cookiesUserID', findUserIDbyEmail(email));
+      req.session.cookiesUserID=findUserIDbyEmail(email);
       res.redirect("/urls"); 
     } else {
       res.sendStatus(403);
@@ -133,7 +142,7 @@ app.post("/login", (req, res) => {
 
 //**LOG-OUT POST
 app.post("/logout", (req, res) => {
-  res.clearCookie('cookiesUserID');
+  req.session.cookiesUserID = null;
   console.log(req.body);
   res.redirect("/urls");    
 });
@@ -145,7 +154,7 @@ app.post("/logout", (req, res) => {
 //**REQUEST TO ADD NEW URL  POINTING TO THE FORM @ URLS_NEW
 app.get("/register", (req, res) => {
   let templateVars = {
-    user: users[req.cookies["cookiesUserID"]],
+    user: users[req.session["cookiesUserID"]],
   }
   res.render("register_form", templateVars);
 });
@@ -167,7 +176,7 @@ app.post("/register", (req, res) => {
       password: hashedPassword
     }; 
     console.log("this is the user datatbase after add new user: ", users)
-    res.cookie('cookiesUserID', findUserIDbyEmail(email));  
+    req.session.cookiesUserID=findUserIDbyEmail(email);  
     res.redirect("/urls");    
   }
   
@@ -186,7 +195,7 @@ app.get("/u/:shortURL", (req, res) => {
 //**DELETE POST
 app.post("/urls/:id/delete", (req, res) => {
 	console.log(req.params.id);
-  if (req.cookies["cookiesUserID"] === urlDatabase[req.params.id]["userID"]){
+  if (req.session["cookiesUserID"] === urlDatabase[req.params.id]["userID"]){
     delete urlDatabase[req.params.id];
     res.redirect("/urls");
   } else {
@@ -199,7 +208,7 @@ app.post("/urls/:id/delete", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   console.log("this is the request.params.id from the get request:", req.params.id);
   let templateVars = { 
-    user: users[req.cookies["cookiesUserID"]],
+    user: users[req.session["cookiesUserID"]],
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id] 
   };
@@ -216,7 +225,7 @@ app.post("/urls/:id", (req, res) => {
   console.log(req.params.id);
   urlDatabase[req.params.id] = {
     longURL: req.body.longURL,
-    userID: req.cookies["cookiesUserID"]
+    userID: req.session["cookiesUserID"]
   }
   res.redirect("/urls");  // redirect to urls_index.ejs
 });

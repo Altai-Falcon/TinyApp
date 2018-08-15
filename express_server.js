@@ -4,12 +4,10 @@ var PORT = 8080; // default port 8080
 const bodyParser = require("body-parser"); //allow access POST request parameters ie: req.body.longURL
 const bcrypt = require('bcryptjs');
 app.use(bodyParser.urlencoded({extended: true})); 
-// var cookieParser = require('cookie-parser');
-// app.use(cookieParser());
 var cookieSession = require('cookie-session');
 app.use(cookieSession({
   name: 'session',
-  keys: ["nrtyrdfgr"],
+  keys: ["asdfglkjh"],
 
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -17,7 +15,8 @@ app.use(cookieSession({
 
 app.set("view engine", "ejs");
 
-// remember template vars just means template variables
+//*************Helper Functions*****************************\\
+
 
 //**FUNCTION TO GENERATE RANDOM ID  (THE DRAW BACK TO THIS  is that the probability of an id collison increases with the size of our database. 
 function generateRandomString() {
@@ -57,7 +56,14 @@ function findPasswordByEmail(email) {
   }
 }
 
-//**THIS IS THE DATA BASE
+//================================================================\\
+
+
+
+
+
+//****************DATA BASES **************************************\\
+//**THIS IS THE URL DATA BASE
 var urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
@@ -83,6 +89,23 @@ const users = {
   }
 };
 
+//===============================================================//
+
+
+
+
+app.get("/", (req, res) => {
+  let templateVars = {
+    user: users[req.session["cookiesUserID"]],
+  };
+  if (req.session["cookiesUserID"]) {
+    res.redirect("/urls", templateVars);
+  } else {
+    res.redirect("/login");
+  }
+});
+
+
 //*****ROOT URLS GET REQUEST  ==>  URLS_INDEX.ejs*****
 app.get("/urls", (req, res) => {
   let templateVars = {
@@ -92,12 +115,16 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+
+
+
+
 //*****************NEW URL******************************************\\
 //**REQUEST TO ADD NEW URL  POINTING TO THE FORM @ URLS_NEW
 app.get("/urls/new", (req, res) => {
   let templateVars = {
     user: users[req.session["cookiesUserID"]],
-  }
+  };
   if (req.session["cookiesUserID"]) {
     res.render("urls_new", templateVars);
   } else {
@@ -114,6 +141,10 @@ app.post("/urls", (req, res) => {
 });
 //====================================================================//
               
+
+
+
+
 
 //*****************LOGIN & LOG OUT******************************************\\
 
@@ -150,6 +181,9 @@ app.post("/logout", (req, res) => {
 
 
 
+
+
+
 //*****************REGISTER GET &  POST**************************************\\
 //**REQUEST TO ADD NEW URL  POINTING TO THE FORM @ URLS_NEW
 app.get("/register", (req, res) => {
@@ -175,13 +209,15 @@ app.post("/register", (req, res) => {
       email: email,
       password: hashedPassword
     }; 
-    console.log("this is the user datatbase after add new user: ", users)
+    console.log("this is the user datatbase after add new user: ", users);
     req.session.cookiesUserID=findUserIDbyEmail(email);  
     res.redirect("/urls");    
   }
   
 });
 //============================================================================//
+
+
 
 
 
@@ -202,6 +238,11 @@ app.post("/urls/:id/delete", (req, res) => {
     res.sendStatus(403);
   }
 });
+
+
+
+
+
 
 //*****************EDIT URL******************************************\\
 //**EDIT URL GET REQUEST ===> Renders form at urls_show.ejs
@@ -226,7 +267,7 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = {
     longURL: req.body.longURL,
     userID: req.session["cookiesUserID"]
-  }
+  };
   res.redirect("/urls");  // redirect to urls_index.ejs
 });
 //====================================================================//

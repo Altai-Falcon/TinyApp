@@ -8,16 +8,22 @@
 <body>
 
 	<% include ./partials/_header %>
+
     <ul>
     	<% for(var url in urls){ %>
     	   <li> <%= `${url}: ${urls[url]["longURL"]}` %>  </li>
-           <a href= <%=`/urls/${url}`%> >Edit</a>
+
+           <form method="GET" action="/urls/<%=url%>">
+               <button type = "submit">Edit</button>
+           </form>      
     	   <form method="POST" action="/urls/<%=url%>/delete">
     		<button type = "submit">Delete</button>
     	   </form>
         <%  } %>	
     </ul>
 
-    <a href="/urls/new">Click here to create a New Short Link!!</a>
+    <h3>Want to add a new URL to your list? Click the link below:</h3>
+    <a href="/urls/new">create a New URL!!</a>
+
 </body>
 </html>
